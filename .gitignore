@@ -58,3 +58,7 @@ fastlane/screenshots
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+
+# OpenCV2
+MindReaderDemo2/opencv2.framework/*
