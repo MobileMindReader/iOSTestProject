@@ -22,39 +22,13 @@ struct MODEL {
 Mat gaussBaseFunc(float mu, float spatial, CvMat x);
 static const int numBasisFuncs = 9;
 
-void Bayes::doStuff() {
-
-    
-    cv::Mat C = (cv::Mat_<double>(2,2) << 0.1, 0.2, 0.3, 0.4);
-    std::cout << "C = " << std::endl << " " << C << std::endl << std::endl;
-    
-    
-    cv::Mat means(1, 1, CV_32F, cv::Scalar(0,0,0));
-    cv::Mat stds(1, 1, CV_32F, cv::Scalar(0.2,0.2,0.2));
-    
-    cv::Mat output(1, 1, CV_32F);
-    
-    cv::randn(output, means, stds);
-    
-    cv::Mat some = cv::Mat::zeros(10, 10, CV_32F); //(10,10,0);
-    cv::Mat idx = cv::Mat::eye(10, 10, CV_32F);
-    
-    std::cout << "Output random variable" << std::endl;
-    std::cout << output << std::endl;
-    
-    cv::Mat yolo;
-    yolo = (cv::Mat_<float>(2,2) << 0.1,0.2,0.3,0.4);
-    
-    std::cout << "YOLO" << std::endl << yolo << std::endl;
-}
-
 
 void Bayes::bayes() {
     
     struct MODEL model;
     
     float gaussBaseMeans[numBasisFuncs] = {
-        -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2
+        2, 1.5, 1, 0.5, 0, -0.5, -1, -1.5, -2
     };
     float gaussBaseSpatials[numBasisFuncs] = {
         0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5
@@ -89,12 +63,7 @@ void Bayes::bayes() {
     cvRandArr( &rng_state, &x, CV_RAND_UNI, cvScalar(-2), cvScalar(2));
 
     
-//    Mat y = phi(w, x);
     Mat y = phi(functions, gaussBaseMeans, gaussBaseSpatials, w, x);
-//    Mat yComp = phi(w, x);
-//    std::cout << y << std::endl;
-//    std::cout << yComp << std::endl;
-    
     Mat targets = Mat(1, numSamples, CV_32F);
     
     // Random target noise
@@ -103,23 +72,22 @@ void Bayes::bayes() {
     
     add(y, Mat(targetNoise), targets);
     
-//    cv::Scalar mean, stddev;
-//    cv::meanStdDev(cv::Mat(&targetNoise), mean, stddev);
-//    std::cout << cv::Mat(&targetNoise) << std::endl;
-//    std::cout << mean << stddev << std::endl;
     
+    std::cout << Mat(&x) << std::endl;
+    std::cout << Mat(&w).t() << std::endl;
+    std::cout << targets << std::endl;
     
     /// Phi
-//    Mat Phi = PhiMatrix(x);
     Mat Phi = PhiMatrix(functions, gaussBaseMeans, gaussBaseSpatials, x);
-//    std::cout << Phi << std::endl;
     
     Mat PhiT = Phi.t();
     
+//    std::cout << Phi << std::endl;
     
     // TODO: Use different random seed methods in order to get more random
     
     Mat PhiTPhi = PhiT*Phi;
+    
     Mat PhiTPhiInv = PhiTPhi.inv();
     Mat PhiTtargets = PhiT * targets.t();
     Mat wML = PhiTPhiInv * PhiTtargets;
@@ -141,9 +109,19 @@ void Bayes::bayes() {
     
     /// ALPHA AND BETA Estimation done with evidence function stuff
     
+    
+    // TODO: Still need to make sure that Phi is correct!!!
+    
+//    std::cout << Phi << std::endl;
+    
+    Mat lambda = Mat();
+    eigen((betaML * (PhiTPhi)), lambda);
+    
+    std::cout << lambda.t() << std::endl;
+
+    
+    
     float beta = betaML;
-    
-    
     
     //// Sigma
     Mat SNInv = model.alpha*Mat::eye(numBasisFuncs+1, numBasisFuncs+1, CV_32F) + (beta * (PhiT * Phi));
@@ -174,7 +152,6 @@ Mat Bayes::PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), floa
     for (int j = 0; j < numBasisFuncs; ++j) {
         Mat temp = (*functions[j])(means[j], spatials[j], x);
         temp.copyTo(Phi.col(j+1));
-//        std::cout << Phi << std::endl;
     }
     
     return Phi;
@@ -215,7 +192,7 @@ Mat gaussBaseFunc(float mu, float spatial, CvMat x) {
     Mat xMean = Mat(&x) - mu;
     pow(xMean, 2, xMeanSq);
     
-    Mat temp = -xMeanSq / powf(2.0*spatial, 2);
+    Mat temp = -xMeanSq / (2.0*powf(spatial, 2));
     exp(temp, y);
     
     return y.t();
@@ -232,7 +209,7 @@ Mat Bayes::baseFunc(CvMat x) {
     Mat xMean = Mat(&x) - mu;
     pow(xMean, 2, xMeanSq);
     
-    Mat temp = -xMeanSq / powf(2.0*spatial, 2);
+    Mat temp = -xMeanSq / 2.0*powf(spatial, 2);
     exp(temp, y);
     
 //    std::cout << y << std::endl;
@@ -245,7 +222,7 @@ Mat Bayes::baseFuncOld(CvMat x) {
     float mu = -2.0;
     
     for (int i = 0; i < x.cols; ++i) {
-        float temp = expf(-powf(x.data.fl[i]-mu, 2)/(powf(2.0*spatial, 2)));
+        float temp = expf(-powf(x.data.fl[i]-mu, 2)/(2.0*powf(spatial, 2)));
         some.at<float>(i,0) = temp;
     }
     
@@ -256,20 +233,21 @@ float Bayes::baseFunc1(float x) {
     float spatial = 0.5;
     float mu = 0.0;
     
-    float y  = expf(-powf(x-mu, 2)/(powf(2.0*spatial, 2)));
+    float y  = expf(-powf(x-mu, 2)/(2.0*powf(spatial, 2)));
     return y;
 }
+
 
 
 void Bayes::testPerf() {
     
     int size = 1000;
     
-    timeval tv;
-    gettimeofday(&tv, 0);
-    int randSeed = rand()*int(tv.tv_usec);
+//    timeval tv;
+//    gettimeofday(&tv, 0);
+//    int randSeed = rand()*int(tv.tv_usec);
+//    CvRNG rng_state = cvRNG(randSeed);
     
-    CvRNG rng_state = cvRNG(randSeed);
     CvMat *wTemp = cvCreateMat(size, size, CV_32F);
     
     CvMat w;
@@ -288,6 +266,33 @@ void Bayes::testPerf() {
     std::cout << B.row(10) << std::endl;
 }
 
+
+
+//void Bayes::doStuff() {
+//    
+//    
+//    cv::Mat C = (cv::Mat_<double>(2,2) << 0.1, 0.2, 0.3, 0.4);
+//    std::cout << "C = " << std::endl << " " << C << std::endl << std::endl;
+//    
+//    
+//    cv::Mat means(1, 1, CV_32F, cv::Scalar(0,0,0));
+//    cv::Mat stds(1, 1, CV_32F, cv::Scalar(0.2,0.2,0.2));
+//    
+//    cv::Mat output(1, 1, CV_32F);
+//    
+//    cv::randn(output, means, stds);
+//    
+//    cv::Mat some = cv::Mat::zeros(10, 10, CV_32F); //(10,10,0);
+//    cv::Mat idx = cv::Mat::eye(10, 10, CV_32F);
+//    
+//    std::cout << "Output random variable" << std::endl;
+//    std::cout << output << std::endl;
+//    
+//    cv::Mat yolo;
+//    yolo = (cv::Mat_<float>(2,2) << 0.1,0.2,0.3,0.4);
+//    
+//    std::cout << "YOLO" << std::endl << yolo << std::endl;
+//}
 
 //void Bayes::test() {
 //    const int K = 10;
