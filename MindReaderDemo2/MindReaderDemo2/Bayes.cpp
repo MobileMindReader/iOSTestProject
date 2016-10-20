@@ -124,14 +124,13 @@ void Bayes::bayes() {
     double betaML = 1/(invBeta/numSamples);
     
     std::cout << "True beta: " << model.beta << std::endl;
-    std::cout << "Estimated: " << betaML << std::endl;
+    std::cout << "ML   beta: " << betaML << std::endl;
+    
     
     /// ALPHA AND BETA Estimation done with evidence function stuff
     
     
-    // TODO: Still need to make sure that Phi is correct!!!
     
-//    std::cout << Phi << std::endl;
     
     Mat lambda = Mat();
     eigen((betaML * (PhiTPhi)), lambda);
@@ -153,17 +152,6 @@ void Bayes::bayes() {
     
 }
 
-//Mat Bayes::PhiMatrix(CvMat x) {
-//    Mat Phi = Mat::ones(x.cols, numBasisFuncs+1, CV_64F);
-//    
-//    for (int i = 1; i <= numBasisFuncs; i++) {
-//        Mat temp = baseFunc(x);
-//        temp.col(0).copyTo(Phi.col(i));
-//    }
-//    
-//    return Phi;
-//}
-
 Mat Bayes::PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x) {
     // x.rows = dimension = 1
     
@@ -181,7 +169,6 @@ Mat Bayes::PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), floa
 Mat Bayes::phi(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat w, CvMat x) {
     // x.rows = dimension = 1
     
-//    Mat y = Mat(x.rows, x.cols, CV_64F);
     Mat y = w.data.db[0] * Mat::ones(x.rows, x.cols, CV_64F);
     
     for (int j = 0; j < numBasisFuncs; ++j) {
@@ -192,18 +179,6 @@ Mat Bayes::phi(Mat (*functions[]) (float mu, float spatial, CvMat x), float mean
     return y;
 }
 
-//Mat Bayes::phi(CvMat w, CvMat x) {
-//    // x.rows = dimension = 1
-//    
-//    Mat y = Mat(x.rows, x.cols, CV_64F);
-//    Mat yTemp = w.data.fl[0] * Mat::ones(x.rows, x.cols, CV_64F);
-//    for (int j = 0; j < numBasisFuncs; ++j) {
-//        // The weight from w must be matching to basefunc
-//        Mat weightedFuncOutput = w.data.fl[1] * baseFunc(x);
-//        add(yTemp, weightedFuncOutput.t(), y);
-//    }
-//    return y;
-//}
 
 Mat gaussBaseFunc(float mu, float spatial, CvMat x) {
     Mat y = Mat(x.cols, 1, CV_64F);
@@ -218,44 +193,6 @@ Mat gaussBaseFunc(float mu, float spatial, CvMat x) {
     return y.t();
 }
 
-//Mat Bayes::baseFunc(CvMat x) {
-//    Mat y = Mat(x.cols, 1, CV_64F);
-//    Mat xMeanSq = Mat(x.cols, 1, CV_64F);
-//    
-//    float spatial = 0.5;
-//    float mu = -2.0;
-//    
-//    
-//    Mat xMean = Mat(&x) - mu;
-//    pow(xMean, 2, xMeanSq);
-//    
-//    Mat temp = -xMeanSq / double(2.0*powf(spatial, 2));
-//    exp(temp, y);
-//    
-////    std::cout << y << std::endl;
-//    return y.t();
-//}
-//
-//Mat Bayes::baseFuncOld(CvMat x) {
-//    Mat some = Mat::ones(x.cols, 1, CV_64F);
-//    float spatial = 0.5;
-//    float mu = -2.0;
-//    
-//    for (int i = 0; i < x.cols; ++i) {
-//        float temp = expf(-powf(x.data.fl[i]-mu, 2)/(2.0*powf(spatial, 2)));
-//        some.at<float>(i,0) = temp;
-//    }
-//    
-//    return some;
-//}
-//
-//float Bayes::baseFunc1(float x) {
-//    float spatial = 0.5;
-//    float mu = 0.0;
-//    
-//    float y  = expf(-powf(x-mu, 2)/(2.0*powf(spatial, 2)));
-//    return y;
-//}
 
 
 
