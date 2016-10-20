@@ -11,6 +11,9 @@
 #include <sys/time.h>
 //#include <opencv2/nonfree/gpu.hpp>
 
+
+using namespace std;
+
 struct MODEL {
     float alpha = 0.28;
     float noiseMean = 0;
@@ -32,6 +35,9 @@ float gaussBaseSpatials[numBasisFuncs] = {
 
 // Samples
 int numSamples = 1000;
+
+
+
 
 void Bayes::bayes() {
     
@@ -56,9 +62,9 @@ void Bayes::bayes() {
 //    float some[10] = {-0.71950376, 0.7439397, 0.044576742, 0.09926828, -0.028395038, 0.24359779, 0.44448805, 0.28344581, -0.50028253, -0.39646003};
 //    Mat w = cv::Mat(numBasisFuncs+1, 1, CV_64F, some);
     
-//    std::cout << cv::Mat(&w).t() << std::endl;
+//    cout << cv::Mat(&w).t() << endl;
 //    cvRandArr(<#CvRNG *rng#>, <#CvArr *arr#>, <#int dist_type#>, <#CvScalar param1#>, <#CvScalar param2#>)
-//    std::cout << w.cols << std::endl;
+//    cout << w.cols << endl;
     
     
     // Generate samples
@@ -88,9 +94,9 @@ void Bayes::bayes() {
     add(y, Mat(targetNoise), targets);
     
     
-//    std::cout << Mat(x) << std::endl;
-//    std::cout << Mat(&w).t() << std::endl;
-//    std::cout << targets << std::endl;
+//    cout << Mat(x) << endl;
+//    cout << Mat(&w).t() << endl;
+//    cout << targets << endl;
     
     /// Phi
     Mat Phi = PhiMatrix(functions, gaussBaseMeans, gaussBaseSpatials, x);
@@ -111,8 +117,8 @@ void Bayes::bayes() {
     
 //    Mat wML = PhiTPhiInv * PhiTtargets;
     
-    std::cout << "Real     : " << Mat(&w).t() << std::endl;
-    std::cout << "Estimated: " << wML.t() << std::endl;
+    cout << "Real     : " << Mat(&w).t() << endl;
+    cout << "Estimated: " << wML.t() << endl;
     
     
     //// Beta ML
@@ -123,8 +129,8 @@ void Bayes::bayes() {
     }
     double betaML = 1/(invBeta/numSamples);
     
-    std::cout << "True beta: " << model.beta << std::endl;
-    std::cout << "ML   beta: " << betaML << std::endl;
+    cout << "True beta: " << model.beta << endl;
+    cout << "ML   beta: " << betaML << endl;
     
     
     /// ALPHA AND BETA Estimation done with evidence function stuff
@@ -134,8 +140,8 @@ void Bayes::bayes() {
     
     Mat lambda = Mat();
     eigen((betaML * (PhiTPhi)), lambda);
-//    std::cout << lambda.t() << std::endl;
-
+//    cout << lambda.t() << endl;
+    alphaBetaEstimation(Phi, targets);
     
     
     // TODO:
@@ -147,10 +153,65 @@ void Bayes::bayes() {
     Mat sigmaSq = 1/beta + Phi*(SNInv.inv()*PhiT);
     double sigma = sqrt(mean(sigmaSq.diag())[0]);
 
-    std::cout << "True sigma: " << model.sigma << std::endl;
-    std::cout << "Estimated : " << sigma << std::endl;
+    cout << "True sigma: " << model.sigma << endl;
+    cout << "Estimated : " << sigma << endl;
     
 }
+
+
+tuple<double, double> Bayes::alphaBetaEstimation(Mat Phi, Mat t) {
+    double alpha = rand();
+    double beta = rand();
+    
+    Mat PhiT = Phi.t();
+    Mat PhiTPhi = PhiT*Phi;
+    Mat betaPhiTPhi = Mat();
+    
+    for (int i = 0; i < 20; ++i) {
+
+        betaPhiTPhi =  beta*PhiTPhi;
+        Mat A = alpha*Mat::eye(numBasisFuncs+1, numBasisFuncs+1, CV_64F) + betaPhiTPhi;
+        Mat mN = Mat();
+        solve(A, PhiT, mN);
+        mN = beta * (mN * t.t());
+        
+        Mat lambda = Mat();
+        eigen(betaPhiTPhi, lambda);
+        
+        double gamma = 0;
+        for (int j = 0; j < lambda.rows; j++) {
+            double eigVal = lambda.at<double>(j);
+            gamma += eigVal /(alpha+eigVal);
+        }
+        
+        alpha = gamma/mN.dot(mN);
+        Mat temp = Mat();
+        pow((t.t()-(Phi*mN)), 2, temp);
+        Scalar temp2 = sum(temp);
+        
+        double betaInv = (1/(numSamples-gamma)) * temp2[0];
+        //        gamma = 0;
+        //        for j=1:size(lambda,1)
+        //            gamma = gamma + lambda(j)/(alpha + lambda(j));
+        //        end
+        //        %     disp(gamma);
+        //
+        //        %%% alpha = M / (2* E_W(m_N));
+        //        alpha = gamma/(mN'*mN);
+        //
+        //           beta_inv = (1/(length(t)-gamma)) * (sum((t-Phi*mN).^2));
+        //           beta = 1/beta_inv;
+        beta = 1/betaInv;
+        
+        cout << alpha << endl;
+        cout << beta << endl;
+        
+    }
+    
+    return {0, 0};
+}
+
+
 
 Mat Bayes::PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x) {
     // x.rows = dimension = 1
@@ -220,7 +281,7 @@ void Bayes::testPerf() {
     
     Mat B = A.inv();
     
-    std::cout << B.row(10) << std::endl;
+    cout << B.row(10) << endl;
 }
 
 
@@ -229,7 +290,7 @@ void Bayes::testPerf() {
 //    
 //    
 //    cv::Mat C = (cv::Mat_<double>(2,2) << 0.1, 0.2, 0.3, 0.4);
-//    std::cout << "C = " << std::endl << " " << C << std::endl << std::endl;
+//    cout << "C = " << endl << " " << C << endl << endl;
 //    
 //    
 //    cv::Mat means(1, 1, CV_64F, cv::Scalar(0,0,0));
@@ -242,13 +303,13 @@ void Bayes::testPerf() {
 //    cv::Mat some = cv::Mat::zeros(10, 10, CV_64F); //(10,10,0);
 //    cv::Mat idx = cv::Mat::eye(10, 10, CV_64F);
 //    
-//    std::cout << "Output random variable" << std::endl;
-//    std::cout << output << std::endl;
+//    cout << "Output random variable" << endl;
+//    cout << output << endl;
 //    
 //    cv::Mat yolo;
 //    yolo = (cv::Mat_<float>(2,2) << 0.1,0.2,0.3,0.4);
 //    
-//    std::cout << "YOLO" << std::endl << yolo << std::endl;
+//    cout << "YOLO" << endl << yolo << endl;
 //}
 
 //void Bayes::test() {
@@ -270,6 +331,6 @@ void Bayes::testPerf() {
 //    cvGetRows( trainData, &trainData1, 0, train_sample_count/2 );
 //    cvRandArr( &rng_state, &trainData1, CV_RAND_NORMAL, cvScalar(200,200), cvScalar(50,50) );
 //    
-//    std::cout << trainData1.cols << std::endl;
+//    cout << trainData1.cols << endl;
 //}
 

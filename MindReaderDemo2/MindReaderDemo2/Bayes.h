@@ -17,17 +17,11 @@ using namespace cv;
 class Bayes {
 private:
     
-    Mat phi(CvMat w, CvMat x);
-    float baseFunc1(float x);
-    Mat baseFunc(CvMat x);
     
     Mat phi(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat w, CvMat x);
-    
-    Mat PhiMatrix(CvMat x);
     Mat PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x);
     
-    
-    Mat baseFuncOld(CvMat x);
+    std::tuple<double, double> alphaBetaEstimation(Mat Phi, Mat t);
 public:
     
     void doStuff();
