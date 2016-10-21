@@ -12,16 +12,25 @@
 #include <opencv2/core/types_c.h>
 #include <opencv2/core/gpumat.hpp>
 
+struct ModelEvidence {
+    double alpha;
+    double beta;
+    double sigma() {
+        return 1/sqrt(beta);
+    }
+    double llh;
+};
+
+
 using namespace cv;
 
 class Bayes {
 private:
     
-    
     Mat phi(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat w, CvMat x);
     Mat PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x);
+    ModelEvidence evidenceMaximisation(Mat Phi, Mat t);
     
-    std::tuple<double, double> alphaBetaEstimation(Mat Phi, Mat t);
 public:
     
     void doStuff();

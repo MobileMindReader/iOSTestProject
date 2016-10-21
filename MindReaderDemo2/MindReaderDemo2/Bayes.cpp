@@ -42,7 +42,7 @@ tuple<double, double> Bayes::bayes() {
     
     struct MODEL model;
     model.dimensions = 1;
-    model.alpha = 0.28;
+    model.alpha = 0.3;
     model.sigma = 0.2;
     model.beta = 1/powf(model.sigma, 2);
     model.noiseMean = 0.0;
@@ -64,8 +64,11 @@ tuple<double, double> Bayes::bayes() {
 
     
     cvRandArr( &rng_state, &w, CV_RAND_NORMAL, cvScalar(0.0), cvScalar(1/model.alpha));
-    cvRandArr( &rng_state, &w, CV_RAND_NORMAL, cvScalar(0.0), cvScalar(1/model.alpha));
 
+//    Scalar means, stds;
+//    meanStdDev(Mat(&w), means, stds);
+//    cout << stds << endl;
+    
 //    float some[10] = {-0.71950376, 0.7439397, 0.044576742, 0.09926828, -0.028395038, 0.24359779, 0.44448805, 0.28344581, -0.50028253, -0.39646003};
 //    Mat w = cv::Mat(numBasisFuncs+1, 1, CV_64F, some);
     
@@ -140,34 +143,52 @@ tuple<double, double> Bayes::bayes() {
     /// ALPHA AND BETA Estimation done with evidence function stuff
     
     
-    auto alphaBeta = alphaBetaEstimation(Phi, targets);
-
-    double alpha = get<0>(alphaBeta);
-    double beta = get<1>(alphaBeta);
+    auto evidence = evidenceMaximisation(Phi, targets);
     
     cout << "True beta: " << model.beta << endl;
-    cout << "Estimated: " << beta << endl;
-    
+    cout << "Estimated: " << evidence.beta << endl;
     
     
     //// THIS IS IRRELEVANT AS sigma^2 = 1/beta
     //// Sigma
-    Mat SNInv = alpha*Mat::eye(numBasisFuncs+1, numBasisFuncs+1, CV_64F) + (beta * PhiTPhi);
+    Mat SNInv = evidence.alpha*Mat::eye(numBasisFuncs+1, numBasisFuncs+1, CV_64F) + (evidence.beta * PhiTPhi);
     Mat temp;
     solve(SNInv, PhiT, temp);
-    Mat sigmaSq = 1/beta + (Phi*temp);
-    double sigma = sqrt(mean(sigmaSq.diag())[0]);
+//    Mat sigmaSq = 1/beta + (Phi*temp);
+//    double sigma = sqrt(mean(sigmaSq.diag())[0]);
 //    cout << "True sigma: " << model.sigma << endl;
 //    cout << "Estimated : " << sigma << endl;
     
-    return {model.alpha/model.beta, alpha / beta};
+    Mat mN = evidence.beta * (temp * targets.t());
+    
+//    for (int y = 0; y < w.rows; ++y) {
+//        printf("%.4f ", Mat(&w).at<double>(y));
+//    }
+//    cout << endl;
+//    for (int y = 0; y < w.rows; ++y) {
+//        printf("%.4f ", wML.at<double>(y));
+//    }
+//    cout << endl;
+//    for (int y = 0; y < w.rows; ++y) {
+//        printf("%.4f ", mN.at<double>(y));
+//    }
+//    cout << endl;
+    
+    return {model.alpha/model.beta, evidence.alpha / evidence.beta};
 }
 
 
-tuple<double, double> Bayes::alphaBetaEstimation(Mat Phi, Mat t) {
+ModelEvidence Bayes::evidenceMaximisation(Mat Phi, Mat t) {
     
     double alpha = rand();
     double beta = rand();
+    int M = numBasisFuncs+1;
+    int N = numSamples;
+    
+    int maxIterations = 200;
+    double tolerance = 1e-4;
+    
+    ModelEvidence evidence;
     
     Mat PhiT = Phi.t();
     Mat PhiTPhi = PhiT*Phi;
@@ -176,12 +197,7 @@ tuple<double, double> Bayes::alphaBetaEstimation(Mat Phi, Mat t) {
     Mat PhiTPhiEig = Mat();
     eigen(PhiTPhi, PhiTPhiEig);
     
-    int maxIterations = 200;
     Mat llh = Mat::zeros(1, maxIterations, CV_64F);
-    
-    int M = numBasisFuncs+1;
-    int N = numSamples;
-    double tolerance = 1e-4;
     
     for (int i = 1; i < maxIterations; ++i) {
 
@@ -214,14 +230,17 @@ tuple<double, double> Bayes::alphaBetaEstimation(Mat Phi, Mat t) {
         
         llh.at<double>(i) = 0.5*(M*log(alpha) + N*log(beta) - 2*Em - log(determinant(A)) - N*log(2*CV_PI));  /// Marginal log likelihood (3.86)
         if ( abs(llh.at<double>(i) - llh.at<double>(i-1)) < tolerance*abs(llh.at<double>(i-1)) )  {
+            evidence.llh = llh.at<double>(i);
             cout << "Converged at iteration: " << i << ", " << llh.at<double>(i) << endl;
             break;
         }
     }
     
-    return {alpha, beta};
+    evidence.alpha = alpha;
+    evidence.beta = beta;
+    
+    return evidence;
 }
-
 
 
 Mat Bayes::PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x) {
