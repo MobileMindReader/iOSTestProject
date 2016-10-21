@@ -10,7 +10,6 @@
 #define Bayes_h
 
 #include <opencv2/core/types_c.h>
-#include <opencv2/core/gpumat.hpp>
 
 struct ModelEvidence {
     double alpha;
@@ -26,13 +25,10 @@ using namespace cv;
 
 class Bayes {
 private:
-    
     Mat phi(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat w, CvMat x);
     Mat PhiMatrix(Mat (*functions[]) (float mu, float spatial, CvMat x), float means[], float spatials[], CvMat x);
     ModelEvidence evidenceMaximisation(Mat Phi, Mat t);
-    
 public:
-    
     void doStuff();
     std::tuple<double, double> bayes();
     void test();

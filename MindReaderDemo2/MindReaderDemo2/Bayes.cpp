@@ -9,8 +9,6 @@
 #include "Bayes.h"
 #include <iostream>
 #include <sys/time.h>
-//#include <opencv2/nonfree/gpu.hpp>
-
 
 using namespace std;
 
@@ -35,8 +33,7 @@ float gaussBaseSpatials[numBasisFuncs] = {
 };
 
 // Samples
-int numSamples = 5000;
-
+int numSamples = 1e5;
 
 tuple<double, double> Bayes::bayes() {
     
@@ -61,8 +58,6 @@ tuple<double, double> Bayes::bayes() {
     CvMat *wTemp = cvCreateMat(numBasisFuncs+1, 1, CV_64F);
     CvMat w;        //    cv::Mat w2(10, 1, CV_64F);
     cvGetRows(wTemp, &w, 0, numBasisFuncs+1);
-
-    
     cvRandArr( &rng_state, &w, CV_RAND_NORMAL, cvScalar(0.0), cvScalar(1/model.alpha));
 
 //    Scalar means, stds;
@@ -73,7 +68,6 @@ tuple<double, double> Bayes::bayes() {
 //    Mat w = cv::Mat(numBasisFuncs+1, 1, CV_64F, some);
     
 //    cout << cv::Mat(&w).t() << endl;
-//    cvRandArr(<#CvRNG *rng#>, <#CvArr *arr#>, <#int dist_type#>, <#CvScalar param1#>, <#CvScalar param2#>)
 //    cout << w.cols << endl;
     
     
@@ -95,14 +89,12 @@ tuple<double, double> Bayes::bayes() {
     CvMat *targetNoise = cvCreateMat(1, numSamples, CV_64F);
     cvRandArr( &rng_state, targetNoise, CV_RAND_NORMAL, cvScalar(model.noiseMean), cvScalar(model.sigma));
     
-    
 //    float targetNoises[200] = {0.54187697, -0.23723364, 0.04156081, -0.15157653, 0.07778772, -0.58498847, 0.33338091, -0.10090246, -0.12051326, -0.1019985, -0.022633998, -0.30929959, -0.26692221, -0.015649071, -0.013466291, -0.10548122, -0.085448392, 0.084335722, -0.10230301, 0.29436901, -0.20315717, -0.094950698, 0.43172058, -0.3087551, -0.15090333, 0.011518011, 0.12109764, 0.074880265, -0.068537481, -0.44062421, 0.0097377654, -0.01061864, -0.15291207, -0.22583902, 0.21703704, -0.21326344, -0.084162459, 0.32184672, 0.22912657, 0.096540011, 0.066717193, 0.090986356, 0.13672248, 0.37862331, -0.21990736, -0.003352683, 0.0078201182, -0.16969179, -0.09087982, 0.13722709, 0.10446312, 0.18861113, 0.11816669, -0.31496853, 0.093197837, -0.034981105, 0.14753382, 0.1676091, 0.24194045, -0.21914013, 0.12961791, 0.16658919, -0.1511779, 0.22500888, 0.10089689, 0.21131623, 0.026996905, -0.097686686, 0.037190378, -0.073381647, -0.0092664091, 0.27759978, 0.061381377, 0.24852709, -0.05153675, -0.15800579, 0.094000243, 0.10220224, -0.0065002958, -0.40737697, 0.086745627, 0.019565482, 0.12402362, -0.080251902, 0.10181405, 0.37907016, -0.086863719, -0.1080996, -0.06580653, -0.18453877, -0.10160305, -0.21984629, 0.049436215, -0.067795888, -0.012287862, 0.084889643, -0.0065334118, -0.16628215, -0.030922998, -0.17403732, -0.22113541, -0.23924522, 0.20716488, 0.0267506, 0.12865981, 0.21712127, 0.22650097, 0.12647034, 0.026337758, 0.19145098, 0.049436036, -0.052483529, -0.19525975, 0.021692665, 0.29838639, -0.13657832, -0.036121648, 0.14689331, 0.097598635, 0.13922572, -0.097543225, -0.12861417, -0.14357492, 0.029159999, 0.033828478, -0.00011314197, -0.20456381, 0.010219778, 0.15246443, -0.17709404, 0.12014958, 0.24400194, -0.028969005, -0.15025115, 0.2273474, -0.26966733, -0.06920103, 0.12513809, 0.088366143, -0.10552964, 0.13418703, 0.25561538, -0.10445126, 0.15276386, 0.12422861, 0.18541937, -0.53717941, -0.29579937, -0.12223955, -0.090703048, -0.2429494, 0.067362785, 0.085739851, 0.12837212, -0.19540314, 0.14556222, -0.15017989, 0.30977428, 0.22266367, -0.13237828, 0.15247861, -0.09857399, 0.0071269842, -0.1113783, 0.13710944, -0.13239683, -0.26972246, -0.34686261, -0.17881523, -0.29179287, 0.15919122, 0.091584548, 0.029055566, 0.038665291, -0.021990886, 0.0222778, 0.37275332, -0.058316868, 0.29078287, -0.21355052, -0.1603611, -0.035892133, -0.0061936211, -0.22877324, -0.027462646, 0.22140172, 0.26185712, 0.0044532982, 0.114456, -0.27435026, -0.016796257, 0.1125555, 0.059728649, -0.13206245, -0.11362293, 0.088931844, -0.17602427, 0.3471069, 0.3194229, 0.18961906};
 //    Mat targetNoise = Mat(1, numSamples, CV_64F, targetNoises);
     
     
 //    Mat(1, numSamples, CV_64F, Scalar(0.0));
     add(y, Mat(targetNoise), targets);
-    
     
 //    cout << Mat(x) << endl;
 //    cout << Mat(&w).t() << endl;
@@ -113,34 +105,12 @@ tuple<double, double> Bayes::bayes() {
     Mat PhiT = Phi.t();
     
     
-    // TODO: Use different random seed methods in order to get more random
-    
     Mat PhiTPhi = PhiT*Phi;
     Mat PhiTtargets = PhiT * targets.t();
     
-//    Mat PhiTPhiInv = PhiTPhi.inv();     // Use linear solve? instead of this step
-//    cv::solve(<#InputArray src1#>, <#InputArray src2#>, <#OutputArray dst#>)
     
-    Mat wML = Mat();
-    solve(PhiTPhi, PhiTtargets, wML);
-    
-    
-//    Mat wML = PhiTPhiInv * PhiTtargets;
-    
-//    cout << "Real     : " << Mat(&w).t() << endl;
-//    cout << "Estimated: " << wML.t() << endl;
-    
-    
-    //// Beta ML
-
-//    double invBeta = 0;
-//    for (int i = 0; i < numSamples; ++i) {
-//        invBeta += pow(targets.at<double>(i) - wML.dot(Phi.row(i).t()), 2);
-//    }
-//    double betaML = 1/(invBeta/numSamples);
-    
-    
-    /// ALPHA AND BETA Estimation done with evidence function stuff
+//    Mat wML = Mat();
+//    solve(PhiTPhi, PhiTtargets, wML);
     
     
     auto evidence = evidenceMaximisation(Phi, targets);
@@ -174,14 +144,17 @@ tuple<double, double> Bayes::bayes() {
 //    }
 //    cout << endl;
     
+    cout << numSamples << endl;
+    
     return {model.alpha/model.beta, evidence.alpha / evidence.beta};
 }
 
 
 ModelEvidence Bayes::evidenceMaximisation(Mat Phi, Mat t) {
     
-    double alpha = rand();
-    double beta = rand();
+    double alpha = rand();      // Random initialize
+    double beta = rand();       // Random initialize
+    
     int M = numBasisFuncs+1;
     int N = numSamples;
     
@@ -192,7 +165,6 @@ ModelEvidence Bayes::evidenceMaximisation(Mat Phi, Mat t) {
     
     Mat PhiT = Phi.t();
     Mat PhiTPhi = PhiT*Phi;
-    Mat betaPhiTPhi = Mat();
     
     Mat PhiTPhiEig = Mat();
     eigen(PhiTPhi, PhiTPhiEig);
@@ -200,31 +172,26 @@ ModelEvidence Bayes::evidenceMaximisation(Mat Phi, Mat t) {
     Mat llh = Mat::zeros(1, maxIterations, CV_64F);
     
     for (int i = 1; i < maxIterations; ++i) {
-
-        betaPhiTPhi =  beta*PhiTPhi;
+        Mat betaPhiTPhi =  beta*PhiTPhi;
         Mat A = alpha*Mat::eye(M, M, CV_64F) + betaPhiTPhi;
+        Mat mNTemp = Mat();
+        solve(A, PhiT, mNTemp);
+        Mat mN = beta * (mNTemp * t.t());
         
-        Mat temp = Mat();
-        solve(A, PhiT, temp);
-        Mat mN = beta * (temp * t.t());
-        
-//        // This can be reduced to only be done once at beginning (for PhiTPhi) and then multiplied by beta..
-//        Mat lambda = Mat();
-//        eigen(betaPhiTPhi, lambda);
         Mat lambda = beta * PhiTPhiEig;
         
         double gamma = 0;
         for (int j = 0; j < M; j++) {
             gamma += lambda.at<double>(j) /(alpha+lambda.at<double>(j));
         }
-        
         alpha = gamma/(mN.dot(mN));
-        temp = Mat();
-        pow((t.t()-(Phi*mN)), 2, temp);
-        double Ew = sum(temp)[0];
         
-        double betaInv = (1/(N-gamma)) * Ew;
-        beta = 1/betaInv;
+        Mat EwTemp = Mat();
+        pow((t.t()-(Phi*mN)), 2, EwTemp);
+        double Ew = sum(EwTemp)[0];
+        
+//        double betaInv = (1/(N-gamma)) * Ew;
+        beta = 1/((1/(N-gamma)) * Ew);
         
         double Em = beta/2 * Ew + alpha/2 * mN.dot(mN);
         
@@ -314,6 +281,21 @@ void Bayes::testPerf() {
     cout << B.row(10) << endl;
 }
 
+
+void mlstuff() {
+    //    Mat wML = PhiTPhiInv * PhiTtargets;
+    
+    //    cout << "Real     : " << Mat(&w).t() << endl;
+    //    cout << "Estimated: " << wML.t() << endl;
+    //// Beta ML
+    
+    //    double invBeta = 0;
+    //    for (int i = 0; i < numSamples; ++i) {
+    //        invBeta += pow(targets.at<double>(i) - wML.dot(Phi.row(i).t()), 2);
+    //    }
+    //    double betaML = 1/(invBeta/numSamples);
+
+}
 
 
 //void Bayes::doStuff() {

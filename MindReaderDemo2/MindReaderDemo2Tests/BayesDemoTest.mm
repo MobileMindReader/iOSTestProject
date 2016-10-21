@@ -49,7 +49,6 @@
     for (int i = 0; i < iterations; ++i) {
         auto ratio = bayes->bayes();
         NSLog(@"%.4f : %.4f", std::get<0>(ratio), std::get<1>(ratio));
-        
         trueVal = std::get<0>(ratio);
         val += std::get<1>(ratio);
     }
@@ -58,6 +57,30 @@
     
     NSLog(@"%.4f", val/iterations);
     
+}
+
+- (void)testTimePerf {
+    Bayes *bayes;
+//    
+//    measureBlock:^{
+//        
+//    };
+//    
+    
+    
+    [self measureBlock:^{
+        XCTestExpectation *expectation = [self expectationWithDescription:@""];
+        
+        
+        auto ratio = bayes->bayes();
+        
+        [expectation fulfill];
+        
+        [self waitForExpectationsWithTimeout:10 handler:^(NSError *error) {
+            XCTAssertNil(error);
+        }];
+    }];
+
 }
 
 - (void)testPerf {
