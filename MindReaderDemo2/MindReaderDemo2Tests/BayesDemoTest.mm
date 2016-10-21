@@ -37,8 +37,26 @@
 
 - (void)testBayes {
     
-    ViewController *controller = [[ViewController alloc] init];
-    [controller something];
+//    ViewController *controller = [[ViewController alloc] init];
+//    [controller something];
+
+    Bayes *bayes;
+    
+    double val = 0;
+    double trueVal = 0;
+    int iterations = 20;
+    
+    for (int i = 0; i < iterations; ++i) {
+        auto ratio = bayes->bayes();
+        NSLog(@"%.4f : %.4f", std::get<0>(ratio), std::get<1>(ratio));
+        
+        trueVal = std::get<0>(ratio);
+        val += std::get<1>(ratio);
+    }
+    
+    NSLog(@"####################################");
+    
+    NSLog(@"%.4f", val/iterations);
     
 }
 

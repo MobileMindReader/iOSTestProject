@@ -25,7 +25,7 @@ private:
 public:
     
     void doStuff();
-    void bayes();
+    std::tuple<double, double> bayes();
     void test();
     void testPerf();
 };
