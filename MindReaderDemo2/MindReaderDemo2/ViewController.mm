@@ -38,7 +38,7 @@
 //    cv::Mat some = cvMat(10, 10, 0, 0);
     Bayes *bayes;
 //    Something some = Something();
-    bayes->bayes();
+    bayes->bayes(1e3);
     
     
 }

@@ -33,9 +33,10 @@ float gaussBaseSpatials[numBasisFuncs] = {
 };
 
 // Samples
-int numSamples = 1e5;
+int numSamples; // = 1e3;
 
-tuple<double, double> Bayes::bayes() {
+tuple<double, double> Bayes::bayes(int numSamples_ = 1e3) {
+    numSamples = numSamples_;
     
     struct MODEL model;
     model.dimensions = 1;
@@ -111,6 +112,9 @@ tuple<double, double> Bayes::bayes() {
     
 //    Mat wML = Mat();
 //    solve(PhiTPhi, PhiTtargets, wML);
+    
+    
+    cout << "Remember to deallocate and clean up heap!!!!" << endl;
     
     
     auto evidence = evidenceMaximisation(Phi, targets);

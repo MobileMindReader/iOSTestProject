@@ -30,7 +30,7 @@ private:
     ModelEvidence evidenceMaximisation(Mat Phi, Mat t);
 public:
     void doStuff();
-    std::tuple<double, double> bayes();
+    std::tuple<double, double> bayes(int numSamples);
     void test();
     void testPerf();
 };
